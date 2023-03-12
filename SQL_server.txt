@@ -1,0 +1,1037 @@
+
+                                                 // طريقة انشاء قاعدة بيانات  //
+
+use master;
+go
+CREATE DATABASE Sales
+ON
+( 
+    NAME = Sales_data,    // ملف البيانات
+	FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\saledata.mdf',
+	SIZE = 20,
+	MAXSIZE = 100,
+	FILEGROWTH = 40 
+)
+LOG ON
+(
+    NAME = Sales_log,   // ملف العمليات الي تتم
+    FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\salelog.idf',
+	SIZE = 20,
+	MAXSIZE = 200,
+	FILEGROWTH = 50
+);
+GO
+
+CREATE DATABASE proudct
+ON
+( 
+    NAME = product_data, // ملف البيانات 
+	FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\prodata.mdf',
+	SIZE = 20,
+	MAXSIZE = 100,
+	FILEGROWTH = 40 
+)
+LOG ON
+(
+    NAME = product_log, // ملف العمليات الي تتم
+    FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL16.MSSQLSERVER\MSSQL\DATA\salelog.idf',
+	SIZE = 20,
+	MAXSIZE = 200,
+	FILEGROWTH = 50
+);
+Go
+
+
+
+// طريقة حذف قاعدة البيانات //
+
+use master;
+
+go
+
+
+drop database Sales;
+
+drop database proudct;
+
+
+
+                                                        // طريقة انشاء المخطط   //   (Schema)
+
+// !! المخططات ليست اجبارية ولكن للتنظيم فقط !! //
+
+// مخطط المبيعات
+
+use Sales;
+go
+
+create schema  sales_schema;
+
+// مخطط المنتجات 
+
+use proudct;
+go
+
+create schema  prouducts_schema;
+
+
+
+                                           //  طريقة انشاء جداول داخل قاعدة البيانات والمخطط الي سويناه   //
+
+
+
+
+
+
+                      //  الجداول لقاعدة البيانات الاولى  //
+
+
+use Sales;
+go
+
+create table sales_schema.customers1
+(
+	customer_id int not null,
+	Fname varchar(50) not null,
+	Lname varchar(50) not null,
+	phone varchar(20) unique ,
+	Email varchar(200) not null,
+	city varchar(20) not null,
+	constraint customers_pk primary key (customer_id) 
+);
+
+create table sales_schema.orders
+(
+	order_id int primary key not null,
+	customer_id int not null,
+	order_city varchar(50) not null,
+	order_date date  not null,
+	required_data varchar(50) not null,
+	shipped_id varchar(100) not null,
+	store_id varchar(20) not null,
+	staff_id varchar(100) not null
+
+	constraint cust_ord_fk foreign key (order_id) 
+	references sales_schema.customers1 (customer_id)
+);
+
+create table sales_schema.staffs
+(
+	staff_id int primary key not null,
+	Fname varchar(50) not null,
+	Lname varchar(50) not null,
+	phone varchar(20) not null,
+	Email varchar(200) not null,
+	active varchar(20) not null,
+	salary numeric (8 , 2) check (salary between 4500 and 150000 ) not null,
+	store_no int not null,
+	manager_id int not null
+	constraint sto_sta_fk foreign key (store_no)
+	references sales_schema.stores (store_id)
+);
+
+create table sales_schema.stores
+(
+	store_id int not null,
+	store_name varchar(50) not null,
+	phone varchar(20) not null,
+	Email varchar(200) not null,
+	city varchar(50) not null
+	constraint customers_pk3 primary key (store_id) 
+);
+
+create table sales_schema.order_items
+(
+	order_id int not null,
+	item_id int not null,
+	proudct_id int not null,
+	quantity int not null,
+	discount float not null
+	constraint customers_pk5 primary key (order_id , item_id) 
+);
+
+
+
+
+
+                    \\  الجداول لقاعدة الثانية الثانية  \\
+
+
+use proudct;
+
+go
+
+create table prouducts_schema.categories
+(
+	category_id int not null,
+	category_name varchar(50) not null
+
+	constraint cat_pk primary key (category_id)
+);
+
+create table prouducts_schema.prouduct
+(
+	product_id int not null,
+	prouduct_name varchar(50) not null,
+	brand_id int not null,
+	category_id int not null,
+	model_year date not null
+
+	constraint pro_pk primary key (product_id)
+);
+
+create table prouducts_schema.stocks
+(
+	store_id int not null,
+	product_id int not null,
+	quantity int not null
+
+	constraint sto_pk primary key (store_id , product_id)
+);
+
+
+                                                          \\  تعديل هيكل الجدول  \\
+
+
+//  اضافة عامود جديد  \\
+
+use Sales;
+
+go
+
+
+Alter table sales_schema.orders
+
+add street varchar(20);
+
+
+\\  تعديل العامود  \\
+
+use Sales;
+
+go
+
+
+Alter table sales_schema.orders
+
+Alter column street varchar(30) not null;
+
+
+//  حذف عامود  //
+
+use Sales;
+
+go
+
+
+Alter table sales_schema.orders
+
+drop column street; 
+
+
+
+\\  اضافة قيد  \\
+
+use Sales;
+
+go
+
+
+Alter table sales_schema.stores
+
+add constraint sto_name_un unique (store_name);
+
+
+\\ قيد لقاعدة البيانات الثانية \\
+
+use proudct;
+
+go
+
+
+Alter table prouducts_schema.prouduct
+
+add constraint brand_fk foreign key (brand_id)
+references prouducts_schema.brands (brand_id)
+
+
+
+//  حذف قيد  //
+
+use Sales;
+
+go
+
+
+Alter table sales_schema.stores
+
+drop constraint sto_name_un;
+
+
+\\  حذف قيد للقاعدة الثانية  \\
+
+use proudct;
+
+go
+
+
+Alter table prouducts_schema.prouduct
+
+drop constraint brand_fk;
+
+
+\\  تغيير اسم جدول  \\
+
+
+use Sales;
+
+go
+
+EXEC sp_rename  'staffs' , 'workr';
+
+
+\\  تغيير اسم عامود  \\
+
+use Sales;
+
+go
+
+create table order2
+(
+order1 int not null,
+);
+
+EXEC sp_rename 'order2.order1' , 'order3' , 'COLUMN';
+
+
+
+
+                                                     \\  ادخال البيانات داخل الجداول  \\
+
+
+
+      //  ادخال صف  //
+
+use Sales;
+
+go
+
+insert into sales_schema.customers1
+(customer_id, Fname, Lname, phone, Email, city)
+
+values 
+(10,'SQL','server','055555','sql@gmail.com','Al-Qassim')
+
+
+    //  ادخال اكثر من صف في نفس الامر  // 
+
+
+use Sales;
+
+go
+
+
+insert into sales_schema.customers1
+(customer_id, Fname , Lname , phone , Email , city)
+values 
+(30,'SQL','server','0555','sql@gmail.com','Al-Qassim'),
+(20 , 'sql' , 'server' , '1254' , 'ss@hotmail.com' , 'Qassim')
+
+
+
+    //    ادخال البيانات ومن ثم عرض البيانات التي تم ادخالها في الجدول     //
+
+
+use Sales;
+
+go
+
+
+insert into sales_schema.customers1
+(customer_id, Fname , Lname , phone , Email , city)
+output inserted.customer_id , inserted.Fname , inserted.Lname , inserted.phone , inserted.Email , inserted.city
+
+values 
+(30,'SQL','server','454552','sql@gmail.com','Al-Qassim'),
+(20 , 'sql' , 'server' , '1254' , 'ss@hotmail.com' , 'Qassim')
+
+
+
+
+                                             \\    تعديل البيانات المدخلة في الصفوف داخل الجدول    \\
+
+
+    \\  تعديل عامود واحد  \\
+use Sales;
+
+GO 
+
+
+update sales_schema.customers1
+
+set Fname = 'uni'
+
+where customer_id = 20;   //  طبعا ضروري نحط هالشرط بحيث نحدد الصف الي نبغى نغيره من خلال قيمة تدلني على هالصف ولو ماحددت راح يصير هالتعديل لكل الصفوف وبخسر البيانات الثانية  //
+
+
+ 
+      \\   تعديل اكثر من عامود في صف واحد بنفس الكود  \\
+
+use Sales;
+
+GO 
+
+
+update sales_schema.customers1
+
+set Fname = 'uni' ,  Lname = 'qassim' , Email = 'qu@gmail.com'
+
+where customer_id = 60 ;   \\  طبعا ماننسى اهمية هالشرط  \\ 
+
+
+
+
+      \\     تعديل اكثر من عامود في اكثر من صف بنفس الكود     \\
+
+use Sales;
+
+GO 
+
+update sales_schema.customers1
+
+set Fname = 'unii' ,  Lname = 'qassiim' , Email = 'qua@gmail.com'
+where customer_id = 10 or customer_id = 30  ;   \\  اهمية الشرط ماننساه  \\
+ 
+
+
+
+                                                   \\    حذف الصفوف داخل الجداول     \\
+
+
+
+   \\   حذف صف واحد   \\
+
+use Sales;
+
+GO 
+
+
+
+delete from sales_schema.customers1
+
+where customer_id = 1;  \\ ماننسى اهمية الشرط لتحديد الصف \\
+
+
+   \\  حذف اكثر من صف   \\
+
+
+use Sales;
+
+GO 
+
+
+
+delete from sales_schema.customers1
+
+where customer_id  between 5 and 7; \\ الشرط المهم \\
+
+  
+
+    \\ حذف عدد من الصفوف الاولى \\
+
+
+use Sales;
+
+GO 
+
+
+delete top(3) from sales_schema.customers1
+
+
+     \\  حذف عدد من الصفوف بالنسبة المئوية  \\
+
+use Sales;
+
+GO 
+
+
+
+delete top(40)percent from sales_schema.customers1
+
+
+
+                                                   \\   طريقة عرض بيانات الجداول    \\
+
+
+    //  عرض عامود واحد   //
+
+
+use Sales;
+
+GO 
+
+
+select  Fname
+from sales_schema.customers1;
+
+
+   //   عرض اكثر من عامود    //
+
+use Sales;
+
+GO 
+
+
+select  Fname , Lname , city
+from sales_schema.customers1;
+
+
+  //  عرض جميع الاعمدة   //
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1;
+
+
+  //  طريقة دمج عامودين وعرضهم كانهم عامود واحد  //
+
+
+use Sales;
+
+GO 
+
+ 
+select customer_id , Fname + ' ' + Lname
+from sales_schema.customers1;
+
+
+   //  طريقة دمج عامودين وعرضهم كانهم عامود واحد ووضع اسم للعامود الي بيتم الدمج فيه //
+
+use Sales;
+
+GO 
+
+ 
+select customer_id , Fname + ' ' + Lname AS 'Customer_name'
+from sales_schema.customers1;
+
+
+   //   طريقة عرض البيانات بناء على الصفوف    //
+
+
+use Sales;
+
+GO 
+
+ 
+select * from sales_schema.customers1
+where customer_id = 1;
+
+
+    //  طريقة عرض البيانات بناء على تحديد الصفوف والاعمدة   //
+
+use Sales;
+
+GO 
+
+ 
+ select customer_id , Fname , Lname , city
+ from sales_schema.customers1
+ where customer_id = 1;
+
+
+   //   طريقة عرض البيانات من حيث تحديد الصفوف والاعمدة وايضا دمج بعض الاعمدة واعطاء اسم للعامود المدموج   //
+use Sales;
+
+GO 
+
+ 
+ select customer_id , Fname + ' ' + Lname AS 'Customer_name'
+ from sales_schema.customers1
+ where customer_id = 1;
+
+
+  //  طريقة عرض البيانات بناء على تحديد اكثر من شرط للصفوف لعامود واحد  //
+
+use Sales;
+
+GO 
+
+ 
+ select customer_id , Fname , Lname , city
+ from sales_schema.customers1
+ where customer_id between 1 and 100;
+
+
+    //  طريقة عرض البيانات بناء على الصفوف ولكن بتحديد شرط للصفوف  //
+
+use Sales;
+
+GO 
+
+ 
+ select customer_id , Fname , Lname , city
+ from sales_schema.customers1
+ where customer_id between 1 and 100;
+
+
+   // طريقة عرض البيانات بناء على تحديد اكثر من شرط للصفوف لمجموعة اعمدة //
+
+use Sales;
+
+GO 
+
+ 
+ select customer_id , Fname , Lname , city
+ from sales_schema.customers1
+ where customer_id between 1 and 100 and city = 'Qassim';
+
+
+   //  نفس المطلوب السابق ولكن ليس مطلوب تحقق جميع الشروط بحيث تحقق شرط واحد يكفي  //
+
+
+
+use Sales;
+
+GO 
+
+ 
+ select customer_id , Fname , Lname , city
+ from sales_schema.customers1
+ where customer_id between 1 and 100 or city = 'Qassim';
+
+
+  //   طريقة استخراج الصفوف التي لاتحتوي على بيانات داخل الجدول   //
+
+use Sales;
+
+GO 
+
+ 
+ select * from sales_schema.customers1
+ where phone is null;
+
+
+  //   نفس المطلوب السابق ولكن الصفوف التي فقط تحتوي على بيانات   //
+
+use Sales;
+
+GO 
+
+ 
+ select * from sales_schema.customers1
+ where phone is not null;
+
+ //   (and) طريقة ل اختصار استخراج البيانات من الصفوف اذا كان لدينا اكثر من شرط بدلا من استخدام   //
+
+use Sales;
+
+GO 
+
+ 
+ select * from sales_schema.customers1
+ where city in('Qassim' , 'Hail' , 'Riyadh');
+
+ // نفس الطريقة السابقة ولكن هنا راح يستخرج البيانات ماعدى البيانات الي موجوده بالشرط //
+
+use Sales;
+
+GO 
+
+ 
+ select * from sales_schema.customers1
+ where city not in('Qassim' , 'Hail' , 'Riyadh');
+
+
+
+  // نفس الطريقة السابقة ولكن عندما نتعامل مع ارقام //
+
+use Sales;
+
+GO 
+
+ 
+ select customer_id , Fname , Lname , city
+ from sales_schema.customers1
+ where customer_id not between 1 and 100;
+
+  //  المثال الجاي يبيله تركيز شوي   //
+  /*  لما تكون عندي قاعدة بيانات وداخلها عندي مجموعة مدن وابغى اعرف كم مدينة عندي وش راح اسوي؟
+	   (distinct)عندي دالة 
+	الدالة ذي وظيفتها تطلع لي البيانات من دون تكرار وعلى نفس سالفة المثال الي قبل راح تطلع لي عدد المدن بدون تكرار وبكذا اعرف كم مدينة عندي من من خلال عدد الصفوف 
+  *\
+
+use Sales;
+
+GO 
+
+ 
+ select distinct city from sales_schema.customers1;
+
+  // like طريقة العرض باستخدام  // 
+
+  /*
+    هنا راح نستخدمها لما نبحث عن اسم ولكن ناقص
+    مثلا ابغى اسم شخص ولكن ما اعرف اسمه بس اني اعرف ان اسمه يبدا بحرف الالف
+    هنا يدخل استعمالها بحيث تجيب لنا كل اسم يبدا بحرف الالف وهذي طريقة كتابتها   
+*\
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname like 'A%';
+
+  //  نفس الي قبل ولكن هنا لو كنت عارف بس اخر حرف من اسمه  //
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname like '%D';
+
+
+  // برضو نفس الي قبل ولكن لو كان هنا بوسط اسمه حرف //
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname like '%S%';
+
+   //  باختصار علامة النسبة المئوية تعبر عن الجزء الناقص  //
+
+  
+
+  //   هنا نجي للاستخدام الثاني لها   // 
+  \\  وهو لو مثلا كنت ابغى اعرف الناس الي اساميهم مثلا عددها 5 حروف كيف استدعيهم؟  \\
+   \\ راح استخدم ( _ ) بحيث ان كل شرطة راح تعبر لي عن حرف واحد وهذا المثال العملي عليها \\ 
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname like '_____';
+
+
+// نفس المثال الي قبل ولكن هنا لو كنت اعرف الحرف الاول ونفس الكلام ينطبق لو اعرف اي حرف بس اهم شي الترتيب حق الحرف لو الاول او الثاني ...... الاخير  //
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname like 'A____';
+
+
+//  هنا نفس العمليات الي قبل ولكن هنا للنفي بحيث اقوله جيب البيانات كلها ماعدى الي بالشرط  //
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname not like 'A%';
+-------------------------------------
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname not like 'A____';
+
+
+//   هذا مثال اخير لو ابغى استعمل الطريقتين مع بعض    //
+
+use Sales;
+
+GO 
+
+
+select * from sales_schema.customers1
+
+where Fname like 'A__c%';
+
+
+//   هنا لو ابغى ابحث عن ارقام   //
+
+use prouduct;
+
+GO 
+
+
+select * from prouducts_schema.prouduct
+
+where list_price like '5__.%';  // ببحث عن الارقام الي بدايتها 500 والشرطتين ( _ _ ) تعبر عن الرقمين والي بعد الفاصله (%) تعبر عن الكسور بحيث اني ما اعرف عددها //
+
+
+
+
+    \\  طريقة العرض بالترتيب  \\
+
+ \\ ترتيب تصاعدي \\
+use Sales;
+
+GO 
+
+
+select Fname , Lname
+from sales_schema.customers1
+
+order by Fname ASC; 
+
+  \\  ترتيب تنازلي  \\
+
+use Sales;
+
+GO 
+
+
+select Fname , Lname
+from sales_schema.customers1
+
+order by Fname DESC;  
+
+  
+
+  \\  طريقة الترتيب لو كانو عامودين او اكثر  \\
+
+
+  \\  ترتيب تصاعدي   \\
+use Sales;
+
+GO 
+
+
+select Fname , city
+from sales_schema.customers1
+
+order by city, Fname ASC; 
+
+  \\  ترتيب تنازلي   \\ 
+
+use Sales;
+
+GO 
+
+
+select Fname , city
+from sales_schema.customers1
+
+order by city, Fname DESC;  
+
+
+
+\\ نفس المثال السابق لو كنت ابغى عامود تصاعدي وعامود تنازلي  \\
+
+
+use Sales;
+
+GO 
+
+
+select Fname , city
+from sales_schema.customers1
+
+order by city DESC, Fname ASC; 
+
+ 
+                                   //   طريقة عرض بيانات من جدولين مختلفين   //
+
+
+\\ inner join \\
+
+use Sales;
+
+GO 
+
+
+select   Fname , Lname , city , order_id , c.customer_id
+from sales_schema.customers1 c , sales_schema.orders o
+
+where c.customer_id = o.customer_id;
+
+ // طريقة ثانية //
+
+use Sales;
+
+GO 
+
+
+select   c.customer_id , Fname , Lname , city , order_id
+from sales_schema.customers1 c inner join sales_schema.orders o
+
+on c.customer_id = o.customer_id;
+
+
+\\  outer join  \\
+
+
+use Sales;
+
+GO 
+
+
+select   c.customer_id , Fname , Lname , city , order_id
+from sales_schema.customers1 c left outer join sales_schema.orders o
+
+on c.customer_id = o.customer_id;
+
+
+\\ لو نبغى يعرض كل الي يمين \\
+
+use Sales;
+
+GO 
+
+
+select   c.customer_id , Fname , Lname , city , order_id
+from sales_schema.customers1 c right outer join sales_schema.orders o
+
+on c.customer_id = o.customer_id;
+
+
+
+\\ لو نبغى كلهم الي يمين او يسار \\
+
+use Sales;
+
+GO 
+
+
+select   c.customer_id , Fname , Lname , city , order_id
+from sales_schema.customers1 c full outer join sales_schema.orders o
+
+on c.customer_id = o.customer_id;
+
+
+    \\ لو نبغى نعرض اكثر من جدولين \\
+
+
+use Sales;
+
+GO 
+
+
+select   Fname , Lname , s.city , order_id , c.customer_id , s.store_id
+from sales_schema.customers1 c , sales_schema.orders o , sales_schema.stores s
+
+where c.customer_id = o.customer_id and o.store_id = s.store_id;
+
+
+
+                                                  //    Select Top Records     //
+
+
+use Sales;
+
+GO 
+
+
+select top 10 customer_id
+from sales_schema.customers1
+
+order by customer_id DESC;
+
+
+\\  بالنسبة المئوية  \\
+
+use Sales;
+
+GO 
+
+
+select top 10 percent customer_id
+from sales_schema.customers1
+
+order by customer_id DESC;
+
+
+\\ with ties \\
+
+use Sales;
+
+GO 
+
+
+select top 10 percent with ties customer_id 
+from sales_schema.customers1
+
+order by customer_id DESC;
+
+
+                                                \\  Nested queries \\
+
+use Sales;
+
+GO 
+
+
+select customer_id 
+from sales_schema.customers1
+where customer_id = (select max(customer_id) from sales_schema.customers1 );
+
+
+
+
+
+                                           \\  Create view    \\
+
+use sales; 
+
+go
+
+
+create view customer_orders
+as
+
+select   Fname , Lname , s.city , order_id , c.customer_id , s.store_id
+from sales_schema.customers1 c , sales_schema.orders o , sales_schema.stores s
+
+where c.customer_id = o.customer_id and o.store_id = s.store_id;
+
+
+
+\\ select view \\
+
+
+use sales; 
+
+go
+
+
+select * from customer_orders;
+
+ 
+\\ تحديد اعمدة معينة \\
+
+use Sales;
+
+GO 
+
+
+select customer_id , Fname , Lname
+from customer_orders;
+
+
